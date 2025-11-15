@@ -1,0 +1,49 @@
+{
+  "timestamp": "2025-11-15T09:52:30.622246",
+  "model_path": "models/best_model.h5",
+  "metrics": {
+    "accuracy": 0.52,
+    "precision": 0.5144230769230769,
+    "recall": 0.7133333333333334,
+    "f1_score": 0.5977653631284916,
+    "specificity": 0.32666666666666666,
+    "auc_roc": 0.6000777777777777,
+    "auc_pr": 0.6567894799608742
+  },
+  "classification_report": {
+    "Normal": {
+      "precision": 0.532608695652174,
+      "recall": 0.32666666666666666,
+      "f1-score": 0.4049586776859504,
+      "support": 300.0
+    },
+    "Defective": {
+      "precision": 0.5144230769230769,
+      "recall": 0.7133333333333334,
+      "f1-score": 0.5977653631284916,
+      "support": 300.0
+    },
+    "accuracy": 0.52,
+    "macro avg": {
+      "precision": 0.5235158862876255,
+      "recall": 0.52,
+      "f1-score": 0.501362020407221,
+      "support": 600.0
+    },
+    "weighted avg": {
+      "precision": 0.5235158862876254,
+      "recall": 0.52,
+      "f1-score": 0.501362020407221,
+      "support": 600.0
+    }
+  },
+  "dataset_info": {
+    "total_samples": 600,
+    "positive_samples": 300,
+    "negative_samples": 300,
+    "class_distribution": {
+      "normal": 0.5,
+      "defective": 0.5
+    }
+  }
+}

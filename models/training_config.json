@@ -1,0 +1,37 @@
+{
+  "model_config": {
+    "input_shape": [
+      128,
+      128,
+      3
+    ],
+    "num_classes": 2,
+    "learning_rate": 0.0005,
+    "batch_size": 32,
+    "epochs": 50,
+    "patience": 10,
+    "model_dir": "models",
+    "checkpoint_path": "models/best_model.h5"
+  },
+  "training_config": {
+    "use_data_augmentation": true,
+    "augmentation_params": {
+      "rotation_range": 40,
+      "width_shift_range": 0.2,
+      "height_shift_range": 0.2,
+      "shear_range": 0.2,
+      "zoom_range": 0.2,
+      "horizontal_flip": true,
+      "vertical_flip": true,
+      "fill_mode": "nearest"
+    },
+    "class_weights": {
+      "0": 1.0,
+      "1": 1.0
+    }
+  },
+  "class_weights": {
+    "0": 1.0,
+    "1": 1.0
+  }
+}
