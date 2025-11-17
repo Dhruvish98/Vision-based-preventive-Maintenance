@@ -9,7 +9,6 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
-import cv2
 from PIL import Image
 import matplotlib.pyplot as plt
 import seaborn as sns

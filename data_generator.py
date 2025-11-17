@@ -10,13 +10,8 @@ import random
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-# Try to import cv2, but make it optional for cloud deployment
-try:
-    import cv2
-    CV2_AVAILABLE = True
-except ImportError:
-    CV2_AVAILABLE = False
-    print("Warning: OpenCV not available. Some image processing features will use PIL fallbacks.")
+# Note: OpenCV was removed as it's not used in this implementation
+# All image processing is handled by PIL/Pillow
 
 from config import DATASET_CONFIG, DEFECT_CONFIG
 
