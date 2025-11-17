@@ -15,43 +15,43 @@ DATASET_CONFIG = {
     'seed': 42
 }
 
-# Defect Generation Parameters
+# Defect Generation Parameters - EXTREMELY prominent defects for clear learning
 DEFECT_CONFIG = {
-    'scratch_probability': 0.4,   # Increased probability
-    'crack_probability': 0.35,    # Increased probability
-    'corrosion_probability': 0.3, # Increased probability
-    'dent_probability': 0.25,     # Increased probability
-    'stain_probability': 0.2,     # Increased probability
-    'defect_intensity_range': (0.5, 0.9),  # More intense defects
-    'noise_level': 0.05           # Reduced noise for clearer defects
+    'scratch_probability': 0.95,   # Almost always add scratches
+    'crack_probability': 0.9,      # Almost always add cracks  
+    'corrosion_probability': 0.85, # Almost always add corrosion
+    'dent_probability': 0.8,       # Almost always add dents
+    'stain_probability': 0.75,     # Almost always add stains
+    'defect_intensity_range': (0.9, 1.0),  # MAXIMUM intensity defects only
+    'noise_level': 0.001           # Almost no noise - pure defects
 }
 
-# Model Configuration - Anti-overfitting settings
+# Model Configuration - Optimized for clear defect learning
 MODEL_CONFIG = {
     'input_shape': (128, 128, 3),
     'num_classes': 2,
-    'learning_rate': 0.0005,  # Much lower learning rate for better generalization
-    'batch_size': 32,         # Larger batch size for more stable gradients
-    'epochs': 50,             # More epochs with early stopping
-    'patience': 10,           # More patience to find best model
+    'learning_rate': 0.0005,    # Higher learning rate for faster initial learning
+    'batch_size': 32,          # Smaller batches for more gradient updates
+    'epochs': 50,             # More epochs to ensure proper learning
+    'patience': 10,            # More patience to avoid premature stopping
     'model_dir': 'models',
     'checkpoint_path': 'models/best_model.h5'
 }
 
-# Training Configuration - Strong augmentation to prevent overfitting
+# Training Configuration - Minimal augmentation for clear defect learning
 TRAINING_CONFIG = {
     'use_data_augmentation': True,
     'augmentation_params': {
-        'rotation_range': 40,        # Increased rotation
-        'width_shift_range': 0.2,    # Increased shift
-        'height_shift_range': 0.2,   # Increased shift
-        'shear_range': 0.2,          # Increased shear
-        'zoom_range': 0.2,           # Increased zoom
-        'horizontal_flip': True,
-        'vertical_flip': True,       # Added vertical flip
+        'rotation_range': 5,         # Minimal rotation to preserve defect patterns
+        'width_shift_range': 0.05,   # Minimal shift
+        'height_shift_range': 0.05,  # Minimal shift
+        'shear_range': 0.02,         # Minimal shear
+        'zoom_range': 0.05,          # Minimal zoom
+        'horizontal_flip': True,     # Keep horizontal flip
+        'vertical_flip': False,      # No vertical flip
         'fill_mode': 'nearest'
     },
-    'class_weights': {0: 1.0, 1: 1.0}  # Balanced classes
+    'class_weights': {0: 1.0, 1: 2.0}  # Give more weight to defective class
 }
 
 # Visualization Configuration

@@ -17,42 +17,46 @@ class DefectDetectionCNN:
         self.history = None
     
     def build_model(self):
-        """Build CNN architecture optimized for defect detection with strong regularization"""
-        
+        """Build simplified CNN architecture optimized for clear defect detection"""
+
         model = models.Sequential([
             # Input layer
             layers.Input(shape=self.config['input_shape']),
-            
-            # First Convolutional Block - Reduced filters to prevent overfitting
-            layers.Conv2D(16, (3, 3), activation='relu', padding='same', name='conv1_1'),
+
+            # First Convolutional Block - More filters to capture defect features
+            layers.Conv2D(32, (5, 5), activation='relu', padding='same', name='conv1_1'),
             layers.BatchNormalization(name='bn1'),
             layers.MaxPooling2D((2, 2), name='pool1'),
-            layers.Dropout(0.4, name='dropout1'),  # Increased dropout
-            
-            # Second Convolutional Block
-            layers.Conv2D(32, (3, 3), activation='relu', padding='same', name='conv2_1'),
+            layers.Dropout(0.2, name='dropout1'),  # Reduced dropout for better learning
+
+            # Second Convolutional Block - Focus on defect patterns
+            layers.Conv2D(64, (3, 3), activation='relu', padding='same', name='conv2_1'),
             layers.BatchNormalization(name='bn2'),
             layers.MaxPooling2D((2, 2), name='pool2'),
-            layers.Dropout(0.4, name='dropout2'),  # Increased dropout
-            
-            # Third Convolutional Block
-            layers.Conv2D(64, (3, 3), activation='relu', padding='same', name='conv3_1'),
+            layers.Dropout(0.2, name='dropout2'),  # Reduced dropout
+
+            # Third Convolutional Block - High-level feature detection
+            layers.Conv2D(128, (3, 3), activation='relu', padding='same', name='conv3_1'),
             layers.BatchNormalization(name='bn3'),
             layers.MaxPooling2D((2, 2), name='pool3'),
-            layers.Dropout(0.5, name='dropout3'),  # Increased dropout
+            layers.Dropout(0.3, name='dropout3'),  # Moderate dropout
+
+            # Flatten and dense layers for classification
+            layers.Flatten(name='flatten'),
             
-            # Global Average Pooling (better than Flatten for regularization)
-            layers.GlobalAveragePooling2D(name='gap'),
-            
-            # Minimal dense layers to prevent overfitting
-            layers.Dense(32, activation='relu', name='dense1'),  # Much smaller
+            # Larger dense layer to learn complex defect patterns
+            layers.Dense(128, activation='relu', name='dense1'),
             layers.BatchNormalization(name='bn_dense1'),
-            layers.Dropout(0.6, name='dropout_dense1'),  # High dropout
+            layers.Dropout(0.4, name='dropout_dense1'),
             
+            # Second dense layer
+            layers.Dense(64, activation='relu', name='dense2'),
+            layers.Dropout(0.3, name='dropout_dense2'),
+
             # Output layer (binary classification)
             layers.Dense(1, activation='sigmoid', name='output')
         ])
-        
+
         self.model = model
         return model
     

@@ -44,9 +44,9 @@ class VisionMaintenanceSystem:
         print("Vision-Based Preventive Maintenance System Initialized")
         print("=" * 60)
     
-    def generate_dataset(self, visualize_samples=True):
+    def generate_dataset(self, visualize_samples=True, force_regenerate=False):
         """Generate synthetic dataset"""
-        print("\n🔧 STEP 1: Generating Synthetic Dataset")
+        print("\n[STEP 1] Generating Synthetic Dataset")
         print("-" * 40)
         
         try:
@@ -54,11 +54,14 @@ class VisionMaintenanceSystem:
             if (os.path.exists(os.path.join(self.dataset_config['data_dir'], 'normal')) and 
                 os.path.exists(os.path.join(self.dataset_config['data_dir'], 'defective'))):
                 
-                response = input("Dataset already exists. Regenerate? (y/n): ").lower()
-                if response != 'y':
-                    print("Using existing dataset...")
-                    self.dataset_generated = True
-                    return True
+                if not force_regenerate:
+                    response = input("Dataset already exists. Regenerate? (y/n): ").lower()
+                    if response != 'y':
+                        print("Using existing dataset...")
+                        self.dataset_generated = True
+                        return True
+                else:
+                    print("Force regenerating dataset...")
             
             # Generate dataset
             self.data_generator.generate_dataset()
@@ -69,30 +72,33 @@ class VisionMaintenanceSystem:
                 self.data_generator.visualize_samples()
             
             self.dataset_generated = True
-            print("✅ Dataset generation completed successfully!")
+            print("[SUCCESS] Dataset generation completed successfully!")
             return True
             
         except Exception as e:
-            print(f"❌ Error generating dataset: {e}")
+            print(f"[ERROR] Error generating dataset: {e}")
             return False
     
     def train_model(self, retrain=False):
         """Train the CNN model"""
-        print("\n🤖 STEP 2: Training CNN Model")
+        print("\n[STEP 2] Training CNN Model")
         print("-" * 40)
         
         if not self.dataset_generated:
-            print("❌ Dataset must be generated first!")
+            print("[ERROR] Dataset must be generated first!")
             return False
         
         try:
             # Check if model already exists
-            if os.path.exists(self.model_config['checkpoint_path']) and not retrain:
-                response = input("Trained model already exists. Retrain? (y/n): ").lower()
-                if response != 'y':
-                    print("Using existing model...")
-                    self.model_trained = True
-                    return True
+            if os.path.exists(self.model_config['checkpoint_path']):
+                if not retrain:
+                    response = input("Trained model already exists. Retrain? (y/n): ").lower()
+                    if response != 'y':
+                        print("Using existing model...")
+                        self.model_trained = True
+                        return True
+                else:
+                    print("Force retraining model...")
             
             # Prepare data
             print("Preparing training data...")
@@ -118,20 +124,20 @@ class VisionMaintenanceSystem:
             self.trainer.plot_training_curves()
             
             self.model_trained = True
-            print("✅ Model training completed successfully!")
+            print("[SUCCESS] Model training completed successfully!")
             return True
             
         except Exception as e:
-            print(f"❌ Error training model: {e}")
+            print(f"[ERROR] Error training model: {e}")
             return False
     
     def evaluate_model(self, detailed_analysis=True):
         """Evaluate the trained model with comprehensive analysis"""
-        print("\n📊 STEP 3: Evaluating Model Performance")
+        print("\n[STEP 3] Evaluating Model Performance")
         print("-" * 40)
         
         if not self.model_trained:
-            print("❌ Model must be trained first!")
+            print("[ERROR] Model must be trained first!")
             return False
         
         try:
@@ -143,7 +149,7 @@ class VisionMaintenanceSystem:
             # Load trained model
             self.evaluator.model_path = self.model_config['checkpoint_path']
             if not self.evaluator.load_model():
-                print("❌ Failed to load trained model!")
+                print("[ERROR] Failed to load trained model!")
                 return False
             
             # Evaluate on test data
@@ -164,7 +170,7 @@ class VisionMaintenanceSystem:
                 
                 # Threshold analysis
                 optimal_threshold, threshold_metrics = self.evaluator.plot_threshold_analysis()
-                print(f"\n🎯 Optimal threshold found: {optimal_threshold:.3f}")
+                print(f"\n[INFO] Optimal threshold found: {optimal_threshold:.3f}")
                 
                 # Analyze misclassifications
                 self.evaluator.analyze_misclassifications(X_test)
@@ -179,21 +185,21 @@ class VisionMaintenanceSystem:
                 self._print_detailed_analysis(metrics, overfitting_gap, max_val_acc, optimal_threshold)
             
             self.model_evaluated = True
-            print("✅ Model evaluation completed successfully!")
+            print("[SUCCESS] Model evaluation completed successfully!")
             
             return True
             
         except Exception as e:
-            print(f"❌ Error evaluating model: {e}")
+            print(f"[ERROR] Error evaluating model: {e}")
             return False
     
     def run_inference(self, image_path=None, num_samples=5):
         """Run inference on new images"""
-        print("\n🔍 STEP 4: Running Inference")
+        print("\n[STEP 4] Running Inference")
         print("-" * 40)
         
         if not self.model_evaluated:
-            print("❌ Model must be evaluated first!")
+            print("[ERROR] Model must be evaluated first!")
             return False
         
         try:
@@ -227,16 +233,16 @@ class VisionMaintenanceSystem:
                 
                 # Run inference
                 predictions = self.evaluator.model.predict(test_images)
-                binary_preds = (predictions > 0.5).astype(int)
+                binary_preds = (predictions > 0.5).astype(int).flatten()
                 
                 # Visualize results
                 self._visualize_inference_results(test_images, true_labels, predictions, binary_preds)
                 
-                print("✅ Inference completed successfully!")
+                print("[SUCCESS] Inference completed successfully!")
                 return True
                 
         except Exception as e:
-            print(f"❌ Error running inference: {e}")
+            print(f"[ERROR] Error running inference: {e}")
             return False
     
     def _visualize_inference_results(self, images, true_labels, predictions, binary_preds):
@@ -248,8 +254,15 @@ class VisionMaintenanceSystem:
         fig, axes = plt.subplots(rows, cols, figsize=(15, 3*rows))
         fig.suptitle('Inference Results on New Samples', fontsize=16, fontweight='bold')
         
-        if rows == 1:
-            axes = axes.reshape(1, -1) if num_images > 1 else [axes]
+        # Ensure axes is always a 2D array for consistent indexing
+        if rows == 1 and cols == 1:
+            axes = np.array([[axes]])
+        elif rows == 1:
+            axes = np.array([axes])
+        elif cols == 1:
+            axes = np.array([[ax] for ax in axes])
+        else:
+            axes = np.array(axes)
         
         class_names = ['Normal', 'Defective']
         
@@ -257,18 +270,20 @@ class VisionMaintenanceSystem:
             row = i // cols
             col = i % cols
             
-            ax = axes[row][col] if rows > 1 else axes[col]
+            # Get the axis (now consistently 2D)
+            ax = axes[row, col]
             
-            # Display image
-            ax.imshow(images[i])
+            # Display image (ensure it's in valid range for imshow)
+            img_display = np.clip(images[i], 0, 1)
+            ax.imshow(img_display)
             
             # Create title with prediction info
             true_label = class_names[true_labels[i]]
-            pred_label = class_names[binary_preds[i][0]]
+            pred_label = class_names[binary_preds[i]]
             confidence = predictions[i][0]
             
             # Color based on correctness
-            color = 'green' if true_labels[i] == binary_preds[i][0] else 'red'
+            color = 'green' if true_labels[i] == binary_preds[i] else 'red'
             
             title = f'True: {true_label}\nPred: {pred_label}\nConf: {confidence:.3f}'
             ax.set_title(title, fontsize=10, color=color, fontweight='bold')
@@ -310,48 +325,48 @@ class VisionMaintenanceSystem:
     def _print_detailed_analysis(self, metrics, overfitting_gap, max_val_acc, optimal_threshold):
         """Print comprehensive performance analysis"""
         print("\n" + "="*70)
-        print("🎯 COMPREHENSIVE PERFORMANCE ANALYSIS")
+        print("COMPREHENSIVE PERFORMANCE ANALYSIS")
         print("="*70)
         
         # Test Performance
-        print(f"📊 Test Set Performance:")
-        print(f"   🎯 Accuracy: {metrics['accuracy']:.4f} ({metrics['accuracy']*100:.2f}%)")
-        print(f"   🔍 Precision: {metrics['precision']:.4f}")
-        print(f"   📡 Recall: {metrics['recall']:.4f}")
-        print(f"   ⚖️ F1-Score: {metrics['f1_score']:.4f}")
-        print(f"   🎪 Specificity: {metrics['specificity']:.4f}")
-        print(f"   📊 AUC-ROC: {metrics['auc_roc']:.4f}")
-        print(f"   📈 AUC-PR: {metrics['auc_pr']:.4f}")
+        print(f"Test Set Performance:")
+        print(f"   Accuracy: {metrics['accuracy']:.4f} ({metrics['accuracy']*100:.2f}%)")
+        print(f"   Precision: {metrics['precision']:.4f}")
+        print(f"   Recall: {metrics['recall']:.4f}")
+        print(f"   F1-Score: {metrics['f1_score']:.4f}")
+        print(f"   Specificity: {metrics['specificity']:.4f}")
+        print(f"   AUC-ROC: {metrics['auc_roc']:.4f}")
+        print(f"   AUC-PR: {metrics['auc_pr']:.4f}")
         
         # Overfitting Analysis
-        print(f"\n🔬 Overfitting Analysis:")
+        print(f"\nOverfitting Analysis:")
         print(f"   Overfitting Gap: {overfitting_gap:.4f}")
         print(f"   Best Val Accuracy: {max_val_acc:.4f}")
         print(f"   Optimal Threshold: {optimal_threshold:.3f}")
         
         # Performance Assessment
-        print(f"\n🏆 Performance Assessment:")
+        print(f"\nPerformance Assessment:")
         if metrics['accuracy'] >= 0.85:
-            print("🎉 Excellent performance! Production-ready model.")
+            print("[EXCELLENT] Excellent performance! Production-ready model.")
         elif metrics['accuracy'] >= 0.75:
-            print("✅ Good performance! Model works well.")
+            print("[GOOD] Good performance! Model works well.")
         elif metrics['accuracy'] >= 0.65:
-            print("👍 Decent performance, some room for improvement.")
+            print("[DECENT] Decent performance, some room for improvement.")
         else:
-            print("⚠️ Performance needs significant improvement.")
+            print("[WARNING] Performance needs significant improvement.")
         
         # Overfitting Assessment
         if overfitting_gap < 0.05:
-            print("✅ Excellent generalization! Very little overfitting.")
+            print("[EXCELLENT] Excellent generalization! Very little overfitting.")
         elif overfitting_gap < 0.10:
-            print("✅ Good generalization! Minimal overfitting.")
+            print("[GOOD] Good generalization! Minimal overfitting.")
         elif overfitting_gap < 0.20:
-            print("⚠️ Moderate overfitting detected.")
+            print("[WARNING] Moderate overfitting detected.")
         else:
-            print("❌ Severe overfitting! Model needs regularization.")
+            print("[ERROR] Severe overfitting! Model needs regularization.")
         
         # Real-world Interpretation
-        print(f"\n🏭 Real-World Manufacturing Impact:")
+        print(f"\nReal-World Manufacturing Impact:")
         print(f"   • Out of 100 parts flagged as defective, {metrics['precision']*100:.1f} are actually defective")
         print(f"   • Catches {metrics['recall']*100:.1f}% of all defective parts")
         print(f"   • Only {(1-metrics['specificity'])*100:.1f}% false alarms on good parts")
@@ -364,13 +379,13 @@ class VisionMaintenanceSystem:
             metrics['f1_score'] > 0.65
         ]
         
-        print(f"\n🎯 Success Criteria Met: {sum(success_criteria)}/3")
+        print(f"\nSuccess Criteria Met: {sum(success_criteria)}/3")
         if all(success_criteria):
-            print("🎉 SUCCESS! All criteria met - Model ready for deployment!")
+            print("[SUCCESS] All criteria met - Model ready for deployment!")
         elif sum(success_criteria) >= 2:
-            print("✅ GOOD! Most criteria met - Model performs well!")
+            print("[GOOD] Most criteria met - Model performs well!")
         else:
-            print("⚠️ NEEDS WORK! Consider further optimization.")
+            print("[WARNING] NEEDS WORK! Consider further optimization.")
         
         print("="*70)
     
@@ -379,19 +394,19 @@ class VisionMaintenanceSystem:
         # This method is kept for backward compatibility but detailed analysis is now in _print_detailed_analysis
         pass
     
-    def run_complete_pipeline(self):
+    def run_complete_pipeline(self, retrain=False):
         """Run the complete pipeline from start to finish"""
-        print("🚀 STARTING COMPLETE VISION-BASED MAINTENANCE PIPELINE")
+        print("STARTING COMPLETE VISION-BASED MAINTENANCE PIPELINE")
         print("="*70)
         
         start_time = datetime.now()
         
         # Step 1: Generate dataset
-        if not self.generate_dataset():
+        if not self.generate_dataset(force_regenerate=retrain):
             return False
         
         # Step 2: Train model
-        if not self.train_model():
+        if not self.train_model(retrain=retrain):
             return False
         
         # Step 3: Evaluate model
@@ -407,9 +422,9 @@ class VisionMaintenanceSystem:
         total_time = end_time - start_time
         
         print("\n" + "="*70)
-        print("🎉 PIPELINE COMPLETED SUCCESSFULLY!")
-        print(f"⏱️  Total execution time: {total_time}")
-        print("📁 Check the 'plots' and 'models' directories for outputs")
+        print("PIPELINE COMPLETED SUCCESSFULLY!")
+        print(f"Total execution time: {total_time}")
+        print("Check the 'plots' and 'models' directories for outputs")
         print("="*70)
         
         return True
@@ -439,7 +454,7 @@ def main():
     
     # Run based on mode
     if args.mode == 'complete':
-        system.run_complete_pipeline()
+        system.run_complete_pipeline(retrain=args.retrain)
     elif args.mode == 'generate':
         system.generate_dataset()
     elif args.mode == 'train':

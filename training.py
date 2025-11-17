@@ -329,33 +329,66 @@ class Trainer:
         return history
     
     def save_training_results(self):
-        """Save training history and model info"""
+        """Save training history and model info with session tracking"""
         if self.history is None:
             print("No training history to save")
             return
         
-        # Save training history
-        history_path = 'models/training_history.json'
-        with open(history_path, 'w') as f:
-            # Convert numpy arrays to lists for JSON serialization
-            history_dict = {}
-            for key, values in self.history.history.items():
-                history_dict[key] = [float(v) for v in values]
-            json.dump(history_dict, f, indent=2)
+        from datetime import datetime
         
-        print(f"Training history saved to {history_path}")
+        # Prepare current session data
+        current_session = {
+            'timestamp': datetime.now().isoformat(),
+            'session_id': f"session_{int(datetime.now().timestamp())}",
+            'history': {},
+            'config': {
+                'model_config': self.model_config,
+                'training_config': self.training_config,
+                'class_weights': self.class_weights
+            },
+            'final_metrics': {
+                'epochs_completed': len(self.history.history.get('loss', [])),
+                'best_val_accuracy': max(self.history.history.get('val_accuracy', [0])),
+                'final_loss': self.history.history.get('loss', [0])[-1] if self.history.history.get('loss') else 0,
+                'final_val_loss': self.history.history.get('val_loss', [0])[-1] if self.history.history.get('val_loss') else 0
+            }
+        }
+        
+        # Convert numpy arrays to lists for JSON serialization
+        for key, values in self.history.history.items():
+            current_session['history'][key] = [float(v) for v in values]
+        
+        # Load existing history or create new
+        history_path = 'models/training_sessions.json'
+        all_sessions = []
+        
+        if os.path.exists(history_path):
+            try:
+                with open(history_path, 'r') as f:
+                    all_sessions = json.load(f)
+            except:
+                all_sessions = []
+        
+        # Add current session
+        all_sessions.append(current_session)
+        
+        # Save updated history
+        with open(history_path, 'w') as f:
+            json.dump(all_sessions, f, indent=2)
+        
+        print(f"Training session saved to {history_path}")
+        
+        # Also save current session as latest (for backward compatibility)
+        latest_history_path = 'models/training_history.json'
+        with open(latest_history_path, 'w') as f:
+            json.dump(current_session['history'], f, indent=2)
         
         # Save training configuration
         config_path = 'models/training_config.json'
-        config_data = {
-            'model_config': self.model_config,
-            'training_config': self.training_config,
-            'class_weights': self.class_weights
-        }
-        
         with open(config_path, 'w') as f:
-            json.dump(config_data, f, indent=2)
+            json.dump(current_session['config'], f, indent=2)
         
+        print(f"Latest training history saved to {latest_history_path}")
         print(f"Training configuration saved to {config_path}")
     
     def plot_training_curves(self):
